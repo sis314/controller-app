@@ -15,7 +15,7 @@ fn main() {
     loop {
         println!("Write...");
         match port.write("Hello\r\n".as_bytes()) {
-            Ok(_) => std::io::stdout().flush().expect("Can't flush stdout"),
+            Ok(_) => std::io::stdout().flush().unwrap(),
             Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
             Err(e) => eprintln!("{:?}", e),
         }
@@ -24,7 +24,7 @@ fn main() {
         match port.read(buf.as_mut_slice()) {
             Ok(t) => {
                 let bytes = &buf[..t];
-                let string = String::from_utf8(bytes.to_vec()).expect("Can't get string from utf8");
+                let string = String::from_utf8(bytes.to_vec()).unwrap();
                 println!("bytes: {:?}", bytes);
                 println!("string: {:?}", string);
             }
