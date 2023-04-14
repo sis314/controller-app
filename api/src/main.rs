@@ -7,7 +7,7 @@ fn main() {
     loop {
         let message: Vec<u8> = vec![0x02];
         match serial::send(&message) {
-            Ok(_) => println!("ok"),
+            Ok(d) => println!("{:?}", d),
             Err(_) => println!("err"),
         };
         std::thread::sleep(Duration::from_millis(1000));

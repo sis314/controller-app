@@ -25,11 +25,11 @@ fn create_serial_port(path: &str) -> Result<Box<dyn SerialPort>, serialport::Err
     {
         Ok(s) => {
             *p = path.to_string();
-            return Ok(s);
+            Ok(s)
         }
         Err(e) => {
             eprintln!("{:?}", e);
-            return Err(e);
+            Err(e)
         }
     }
 }
@@ -41,8 +41,8 @@ pub fn set_serial_port(path: &str) -> Result<(), serialport::Error> {
     {
         p = PATH.lock().unwrap().clone(); //want to get p but not to want lock for a long time
     }
-    if path.to_string() == p {
-        return Ok(());
+    if *path == p {
+        Ok(())
     } else {
         let port = create_serial_port(path);
         match port {
@@ -94,12 +94,10 @@ pub fn send(buf: &[u8]) -> Result<Vec<u8>, ()> {
     //受信する
     let mut buf: Vec<u8> = vec![0; 10];
     match serial_read(&mut buf) {
-        Ok(_) => {
-            return Ok(buf);
-        }
+        Ok(_) => Ok(buf),
         Err(e) => {
             eprintln!("{:?}", e);
-            return Err(());
+            Err(())
         }
     }
 }
