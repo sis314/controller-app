@@ -7,19 +7,48 @@ use std::time::Duration;
 
 // Global mutable SerialPort instance
 static SERIAL: Lazy<Mutex<Box<dyn SerialPort>>> =
-    Lazy::new(|| Mutex::new(create_serial_port("COM10")));
+    Lazy::new(|| Mutex::new(create_serial_port("COM10").unwrap()));
+static PATH: Lazy<Mutex<String>> = Lazy::new(|| Mutex::new("COM10".to_string()));
 
 // reteurn SerialPort instance from path
-fn create_serial_port(path: &str) -> Box<dyn SerialPort> {
-    serialport::new(path, 9600)
+fn create_serial_port(path: &str) -> Result<Box<dyn SerialPort>, &str> {
+    //!例外処理が必要
+    let mut p = PATH.lock().unwrap();
+    match serialport::new(path, 9600)
         .stop_bits(serialport::StopBits::One)
         .data_bits(serialport::DataBits::Eight)
         .timeout(Duration::from_millis(100))
         .open()
-        .unwrap_or_else(|e| {
-            eprintln!("Failed to open \"{}\". Error: {}", path, e);
-            ::std::process::exit(1);
-        })
+    {
+        Ok(s) => {
+            *p = path.to_string();
+            return Ok(s);
+        }
+        Err(e) => {
+            eprintln!("{:?}", e);
+            return Err("");
+        }
+    }
+}
+
+fn set_serial_port(path: &str) {
+    let mut serial = SERIAL.lock().unwrap();
+    let p;
+    {
+        p = PATH.lock().unwrap().clone(); //want to get p but not to want lock for a long time
+    }
+    if path.to_string() == p {
+        return;
+    } else {
+        println!("{:?}", p);
+
+        let port = create_serial_port(path);
+        println!("Create serial port");
+        match port {
+            Ok(s) => *serial = s,
+            Err(_) => (),
+        }
+    }
 }
 
 // Write serial and return result
@@ -49,6 +78,10 @@ fn serial_read(buf: &mut Vec<u8>) -> Result<&[u8], Error> {
 }
 
 fn main() {
+    set_serial_port("COM1");
+    println!("change to COM1");
+    set_serial_port("COM10");
+    println!("change to COM10");
     let mut buf: Vec<u8> = vec![0; 1000];
     loop {
         println!("Write...");
