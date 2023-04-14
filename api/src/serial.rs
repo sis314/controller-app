@@ -48,6 +48,7 @@ pub fn set_serial_port(path: &str) -> Result<(), serialport::Error> {
         match port {
             Ok(s) => {
                 *serial = s;
+                println!("change to {}", path);
                 Ok(())
             }
             Err(e) => Err(e),
