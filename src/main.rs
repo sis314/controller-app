@@ -1,13 +1,14 @@
 use std::{io::Write, time::Duration};
 
 fn main() {
-    let mut port = serialport::new("COM1", 9600)
+    let path = "COM1";
+    let mut port = serialport::new(path, 9600)
         .stop_bits(serialport::StopBits::One)
         .data_bits(serialport::DataBits::Eight)
         .timeout(Duration::from_millis(100))
         .open()
         .unwrap_or_else(|e| {
-            eprintln!("Failed to open \"{}\". Error: {}", "/dev/ttyUSB", e);
+            eprintln!("Failed to open \"{}\". Error: {}", path, e);
             ::std::process::exit(1);
         });
 
