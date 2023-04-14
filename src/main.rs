@@ -14,7 +14,8 @@ fn main() {
     let mut buf: Vec<u8> = vec![0; 1000];
     loop {
         println!("Write...");
-        match port.write("Hello\r\n".as_bytes()) {
+        let message: u8 = 0x02;
+        match port.write(&[message]) {
             Ok(_) => std::io::stdout().flush().unwrap(),
             Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
             Err(e) => eprintln!("{:?}", e),
@@ -24,9 +25,7 @@ fn main() {
         match port.read(buf.as_mut_slice()) {
             Ok(t) => {
                 let bytes = &buf[..t];
-                let string = String::from_utf8(bytes.to_vec()).unwrap();
                 println!("bytes: {:?}", bytes);
-                println!("string: {:?}", string);
             }
             Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
             Err(e) => eprintln!("{:?}", e),
