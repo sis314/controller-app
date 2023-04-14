@@ -1,7 +1,7 @@
 use std::{io::Write, time::Duration};
 
 fn main() {
-    let path = "COM1";
+    let path = "COM10";
     let mut port = serialport::new(path, 9600)
         .stop_bits(serialport::StopBits::One)
         .data_bits(serialport::DataBits::Eight)
