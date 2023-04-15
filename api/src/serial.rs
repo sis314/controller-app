@@ -4,15 +4,18 @@ use std::io::{Error, Write};
 use std::sync::Mutex;
 use std::time::Duration;
 
-const DEFAULT_PATH: &str = "COM10";
 const BAUD_RATE: u32 = 9600;
 const TIMEOUT_DURATION: u64 = 100;
 
+struct Serial {
+    serial: Option<Box<dyn SerialPort>>,
+}
+
 // Global mutable SerialPort instance
-static SERIAL: Lazy<Mutex<Box<dyn SerialPort>>> =
-    Lazy::new(|| Mutex::new(create_serial_port(DEFAULT_PATH).unwrap()));
+static SERIAL: Lazy<Mutex<Box<Serial>>> =
+    Lazy::new(|| Mutex::new(Box::new(Serial { serial: None })));
 // Path of SerialPort instance
-static PATH: Lazy<Mutex<String>> = Lazy::new(|| Mutex::new(DEFAULT_PATH.to_string()));
+static PATH: Lazy<Mutex<String>> = Lazy::new(|| Mutex::new("".to_string()));
 
 // reteurn SerialPort instance from path
 fn create_serial_port(path: &str) -> Result<Box<dyn SerialPort>, serialport::Error> {
@@ -28,37 +31,49 @@ fn create_serial_port(path: &str) -> Result<Box<dyn SerialPort>, serialport::Err
             return Ok(s);
         }
         Err(e) => {
-            eprintln!("{:?}", e);
             return Err(e);
         }
     }
 }
 
 // Change SerialPort connection
-pub fn set_serial_port(path: &str) -> Result<(), serialport::Error> {
+pub fn set_serial_port(path: &str) -> Result<(), ()> {
     let mut serial = SERIAL.lock().unwrap();
     let p;
     {
         p = PATH.lock().unwrap().clone(); //want to get p but not to want lock for a long time
     }
     if path.to_string() == p {
+        println!("port is already {}", path);
         return Ok(());
     } else {
         let port = create_serial_port(path);
         match port {
             Ok(s) => {
-                *serial = s;
-                println!("change to {}", path);
+                *serial = Box::new(Serial { serial: Some(s) });
+                println!("port set to {}", path);
                 Ok(())
             }
-            Err(e) => Err(e),
+            Err(e) => {
+                eprintln!("{:?}", e);
+                Err(())
+            }
         }
     }
 }
 
 // Write serial and return result
 fn serial_write(buf: &[u8]) -> Result<(), Error> {
-    let mut port = SERIAL.lock().unwrap();
+    let mut serial = SERIAL.lock().unwrap();
+    let port: &mut Box<dyn SerialPort> = match serial.serial.as_mut() {
+        Some(a) => a,
+        None => {
+            return Err(Error::new(
+                std::io::ErrorKind::NotFound,
+                "Serial port not found",
+            ));
+        }
+    };
     match port.write(buf) {
         Ok(_) => {
             std::io::stdout()
@@ -72,7 +87,16 @@ fn serial_write(buf: &[u8]) -> Result<(), Error> {
 
 // Read serial and return result
 fn serial_read(buf: &mut Vec<u8>) -> Result<&[u8], Error> {
-    let mut port = SERIAL.lock().unwrap();
+    let mut serial = SERIAL.lock().unwrap();
+    let port: &mut Box<dyn SerialPort> = match serial.serial.as_mut() {
+        Some(a) => a,
+        None => {
+            return Err(Error::new(
+                std::io::ErrorKind::NotFound,
+                "Serial port not found",
+            ));
+        }
+    };
     match port.read(buf.as_mut_slice()) {
         Ok(t) => {
             let bytes = &buf[..t];
@@ -82,24 +106,34 @@ fn serial_read(buf: &mut Vec<u8>) -> Result<&[u8], Error> {
     }
 }
 
-pub fn send(buf: &[u8]) -> Result<Vec<u8>, ()> {
-    // 送信する
-    match serial_write(buf) {
-        Ok(_) => (),
-        Err(e) => {
-            eprintln!("{:?}", e);
-            return Err(());
-        }
-    };
-    //受信する
-    let mut buf: Vec<u8> = vec![0; 10];
-    match serial_read(&mut buf) {
-        Ok(_) => {
-            return Ok(buf);
-        }
-        Err(e) => {
-            eprintln!("{:?}", e);
-            return Err(());
+pub fn send(buf: &[u8]) -> Result<(), ()> {
+    for _i in 0..=2 {
+        // 送信する
+        println!("send: {:?}", buf);
+        match serial_write(buf) {
+            Ok(_) => (),
+            Err(e) => {
+                eprintln!("{:?}", e);
+                continue;
+            }
+        };
+        //受信する
+        let mut buf: Vec<u8> = vec![0; 10];
+        match serial_read(&mut buf) {
+            Ok(data) => {
+                if data[0] != 1 {
+                    println!("read: {:?}", buf);
+                    return Ok(());
+                } else {
+                    eprintln!("Device failed to read sending data");
+                    continue;
+                }
+            }
+            Err(e) => {
+                eprintln!("{:?}", e);
+                continue;
+            }
         }
     }
+    return Err(());
 }

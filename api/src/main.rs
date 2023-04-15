@@ -2,12 +2,11 @@ use std::time::Duration;
 
 mod serial;
 fn main() {
-    serial::set_serial_port("COM1").unwrap();
     serial::set_serial_port("COM10").unwrap();
     loop {
         let message: Vec<u8> = vec![0x02];
         match serial::send(&message) {
-            Ok(d) => println!("{:?}", d),
+            Ok(d) => (),
             Err(_) => println!("err"),
         };
         std::thread::sleep(Duration::from_millis(1000));
