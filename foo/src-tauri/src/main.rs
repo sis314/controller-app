@@ -19,14 +19,14 @@ fn greet(_name: &str) -> String {
 }
 
 #[tauri::command]
-fn operate(id: i32, mn: i32, pos: i32, val: i32) {
+fn operate(id: i32, mn: i32, pos: i32, val: i32) -> Result<(), ()> {
     let buf: Vec<u8> = format(
         id.try_into().unwrap(),
         mn.try_into().unwrap(),
         pos.try_into().unwrap(),
         val.try_into().unwrap(),
     );
-    serial::send(&buf).unwrap(); //must to hundle
+    serial::send(&buf) //must to hundle
 }
 
 mod serial;
