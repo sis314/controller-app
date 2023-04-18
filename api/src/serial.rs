@@ -1,3 +1,4 @@
+use crate::data::SendData;
 use crate::error::{Error, ErrorKind};
 use serialport::SerialPort;
 use std::io::Write;
@@ -57,14 +58,14 @@ impl Serial {
     }
 
     // Write serial and return result
-    fn serial_write(&mut self, buf: &[u8]) -> Result<(), Error> {
+    fn serial_write(&mut self, data: &SendData) -> Result<(), Error> {
         let port: &mut Box<dyn SerialPort> = match self.serial.as_mut() {
             Some(a) => a,
             None => {
                 return Err(Error::new(ErrorKind::PortNotFound));
             }
         };
-        match port.write(buf) {
+        match port.write(data.0.as_slice()) {
             Ok(_) => {
                 std::io::stdout()
                     .flush()
@@ -92,12 +93,12 @@ impl Serial {
         }
     }
 
-    pub fn send(&mut self, buf: &[u8]) -> Result<(), Error> {
+    pub fn send(&mut self, data: &SendData) -> Result<(), Error> {
         let mut errbuf: Error = Error::new(ErrorKind::None);
         for _i in 0..=2 {
             // 送信する
-            println!("send: {:?}", buf);
-            match self.serial_write(buf) {
+            println!("send: {:?}", data);
+            match self.serial_write(data) {
                 Ok(_) => (),
                 Err(e) => {
                     eprintln!("{:?}", e);
