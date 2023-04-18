@@ -23,7 +23,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.error {
             ErrorKind::PortNotFound => f.write_str(
-                "\x1b[1m\x1b[31merror\x1b[m\x1b[1m:\x1b[m PortNotFound. Init port field before using",
+                "\x1b[1m\x1b[31merror\x1b[m\x1b[1m:\x1b[m PortNotFound. Init port field before use",
             ),
             ErrorKind::PortSetFailed => {
                 f.write_str("\x1b[1m\x1b[31merror\x1b[m\x1b[1m:\x1b[m PortSetFailed. Invalid port pass or Permission denided")
