@@ -1,13 +1,18 @@
 use std::time::Duration;
 
+use serial::Serial;
+
+mod error;
 mod serial;
 fn main() {
-    serial::set_serial_port("COM10").unwrap();
+    let mut serial = Serial::new();
+    let a = serial.set_port("COM10");
+    println!("{:?}", a);
     loop {
         let message: Vec<u8> = vec![0x02];
-        match serial::send(&message) {
-            Ok(d) => (),
-            Err(_) => println!("err"),
+        match serial.send(&message) {
+            Ok(_) => (),
+            Err(e) => println!("{:?}", e),
         };
         std::thread::sleep(Duration::from_millis(1000));
     }
