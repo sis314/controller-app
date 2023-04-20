@@ -4,7 +4,7 @@ use serial::Serial;
 use std::sync::Mutex;
 use std::time::Duration;
 
-mod data;
+mod data; //test
 mod error;
 mod serial;
 
