@@ -15,6 +15,18 @@ impl Error {
     pub fn new(error_kind: ErrorKind) -> Error {
         Error { error: error_kind }
     }
+
+    pub fn to_string(&self) -> String {
+        let str = match self.error {
+            ErrorKind::PortNotFound => "PortNotFound",
+            ErrorKind::PortSetFailed => "PortSetFailed",
+            ErrorKind::SerialWriteFailed => "SerialWriteFailed",
+            ErrorKind::SerialReadFailed => "SerialReadFailed",
+            ErrorKind::InvalidDeviceReturn(_) => "InvalidDeviceReturn",
+            ErrorKind::None => "NotDefined",
+        };
+        str.to_string()
+    }
 }
 
 use std::fmt;
