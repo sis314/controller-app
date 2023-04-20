@@ -49,10 +49,7 @@ impl Serial {
                     println!("port set to {}", path);
                     Ok(())
                 }
-                Err(e) => {
-                    eprintln!("{:?}", e);
-                    Err(e)
-                }
+                Err(e) => Err(e),
             }
         }
     }
@@ -97,11 +94,9 @@ impl Serial {
         let mut errbuf: Error = Error::new(ErrorKind::None);
         for _i in 0..=2 {
             // 送信する
-            println!("send: {:?}", data);
             match self.serial_write(data) {
                 Ok(_) => (),
                 Err(e) => {
-                    eprintln!("{:?}", e);
                     errbuf = e;
                     continue;
                 }
@@ -111,16 +106,13 @@ impl Serial {
             match self.serial_read(&mut buf) {
                 Ok(data) => {
                     if data[0] != 1 {
-                        println!("read: {:?}", buf);
                         return Ok(());
                     } else {
-                        eprintln!("Device failed to read sending data");
                         errbuf = Error::new(ErrorKind::InvalidDeviceReturn(data[0]));
                         continue;
                     }
                 }
                 Err(e) => {
-                    eprintln!("{:?}", e);
                     errbuf = e;
                     continue;
                 }
