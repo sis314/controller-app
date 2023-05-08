@@ -20,7 +20,7 @@ impl Serial {
         }
     }
 
-    // reteurn SerialPort instance from path
+    /// reteurn SerialPort instance from path
     fn create_port(&mut self, path: &str) -> Result<Box<dyn SerialPort>, Error> {
         match serialport::new(path, BAUD_RATE)
             .stop_bits(serialport::StopBits::One)
@@ -36,7 +36,7 @@ impl Serial {
         }
     }
 
-    // Change SerialPort connection
+    /// Change SerialPort connection
     pub fn set_port(&mut self, path: &str) -> Result<(), Error> {
         if path == &self.path[..] {
             println!("port is already {}", path);
@@ -54,7 +54,11 @@ impl Serial {
         }
     }
 
-    // Write serial and return result
+    fn check_received(data: &[u8], id: u8) -> bool {
+        data[0] == id
+    }
+
+    /// Write serial and return result
     fn serial_write(&mut self, data: &SendData) -> Result<(), Error> {
         let port: &mut Box<dyn SerialPort> = match self.serial.as_mut() {
             Some(a) => a,
@@ -73,7 +77,7 @@ impl Serial {
         }
     }
 
-    // Read serial and return result
+    /// Read serial and return result
     fn serial_read<'a>(&mut self, buf: &'a mut Vec<u8>) -> Result<&'a [u8], Error> {
         let port: &mut Box<dyn SerialPort> = match self.serial.as_mut() {
             Some(a) => a,
@@ -90,9 +94,11 @@ impl Serial {
         }
     }
 
-    pub fn send(&mut self, data: &SendData) -> Result<(), Error> {
+    pub fn send(&mut self, data: Vec<u8>) -> Result<(), Error> {
         let mut errbuf: Error = Error::new(ErrorKind::None);
         for _i in 0..=2 {
+            let id: u8 = 0;
+
             // 送信する
             match self.serial_write(data) {
                 Ok(_) => (),
@@ -105,7 +111,7 @@ impl Serial {
             let mut buf: Vec<u8> = vec![0; 10];
             match self.serial_read(&mut buf) {
                 Ok(data) => {
-                    if data[0] != 1 {
+                    if Self::check_received(data, id) {
                         return Ok(());
                     } else {
                         errbuf = Error::new(ErrorKind::InvalidDeviceReturn(data[0]));
