@@ -8,14 +8,14 @@ const BAUD_RATE: u32 = 9600;
 const TIMEOUT_DURATION: u64 = 100;
 
 pub struct Serial {
-    serial: Option<Box<dyn SerialPort>>,
+    port: Option<Box<dyn SerialPort>>,
     path: String,
 }
 
 impl Serial {
     pub fn new() -> Serial {
         Serial {
-            serial: None,
+            port: None,
             path: "".to_string(),
         }
     }
@@ -42,31 +42,22 @@ impl Serial {
             println!("port is already {}", path);
             Ok(())
         } else {
-            let port = self.create_port(path);
-            match port {
-                Ok(s) => {
-                    self.serial = Some(s);
-                    println!("port set to {}", path);
-                    Ok(())
-                }
-                Err(e) => Err(e),
-            }
+            let port = self.create_port(path)?;
+            self.port = Some(port);
+            println!("port set to {}", path);
+            Ok(())
         }
     }
 
-    fn check_received(data: &[u8], id: u8) -> bool {
-        data[0] == id
-    }
-
     /// Write serial and return result
-    fn serial_write(&mut self, data: &SendData) -> Result<(), Error> {
-        let port: &mut Box<dyn SerialPort> = match self.serial.as_mut() {
+    fn serial_write(&mut self, data: Vec<u8>) -> Result<(), Error> {
+        let port: &mut Box<dyn SerialPort> = match self.port.as_mut() {
             Some(a) => a,
             None => {
                 return Err(Error::new(ErrorKind::PortNotFound));
             }
         };
-        match port.write(data.0.as_slice()) {
+        match port.write(&data) {
             Ok(_) => {
                 std::io::stdout()
                     .flush()
@@ -79,7 +70,7 @@ impl Serial {
 
     /// Read serial and return result
     fn serial_read<'a>(&mut self, buf: &'a mut Vec<u8>) -> Result<&'a [u8], Error> {
-        let port: &mut Box<dyn SerialPort> = match self.serial.as_mut() {
+        let port: &mut Box<dyn SerialPort> = match self.port.as_mut() {
             Some(a) => a,
             None => {
                 return Err(Error::new(ErrorKind::PortNotFound));
@@ -94,11 +85,9 @@ impl Serial {
         }
     }
 
-    pub fn send(&mut self, data: Vec<u8>) -> Result<(), Error> {
+    pub fn send(&mut self, data: Vec<u8>, send_num: u8) -> Result<(), Error> {
         let mut errbuf: Error = Error::new(ErrorKind::None);
         for _i in 0..=2 {
-            let id: u8 = 0;
-
             // 送信する
             match self.serial_write(data) {
                 Ok(_) => (),
@@ -108,15 +97,13 @@ impl Serial {
                 }
             };
             //受信する
-            let mut buf: Vec<u8> = vec![0; 10];
+            let mut buf: Vec<u8> = vec![0];
             match self.serial_read(&mut buf) {
                 Ok(data) => {
-                    if Self::check_received(data, id) {
+                    if send_num == data[1] {
                         return Ok(());
-                    } else {
-                        errbuf = Error::new(ErrorKind::InvalidDeviceReturn(data[0]));
-                        continue;
                     }
+                    continue;
                 }
                 Err(e) => {
                     errbuf = e;
