@@ -51,6 +51,9 @@ fn format(send_num: u8, address: u8, mn: u8, func: u8, dir: u8, speed: u8, id: u
     let header: u8 = 0x40;
     let footer: u8 = 0x00;
     let length: u8 = 4;
+    mn = mn & 0x03;
+    func = func & 0x07;
+    dir = dir & 0x01;
     let data3 = (mn << 4) | (func << 1) | 1;
 
     let sum: u16 = (send_num + address + data3 + speed).into();
