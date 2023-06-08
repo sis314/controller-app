@@ -51,7 +51,22 @@ fn send(address: u8, mn: u8,dir: u8, speed: u8, id: u8) -> Result<(), String> {
 fn format(send_num: u8, address: u8, mn: u8, dir: u8, speed: u8) -> Vec<u8> {
     let header: u8 = 0x40;
     let footer: u8 = 0x00;
+<<<<<<< HEAD
     let data: u8 = ((mn<<6)&0b11000000) + (dir&1);
     let sum: u8 = (Wrapping(send_num) + Wrapping(address) + Wrapping(data) + Wrapping(speed)).0;
     vec![header,send_num,address,data,speed,sum,footer]
+=======
+    let length: u8 = 4;
+    mn = mn & 0x03;
+    func = func & 0x07;
+    dir = dir & 0x01;
+    let data3 = (mn << 4) | (func << 1) | 1;
+
+    let sum: u16 = (send_num + address + data3 + speed).into();
+    let check_sum: u8 = sum as u8;
+
+    vec![
+        header, length, send_num, address, data3, speed, check_sum, footer,
+    ]
+>>>>>>> c4c5c3f99fa9c1180b73aef6ec904237637d31d0
 }
