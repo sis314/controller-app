@@ -3,7 +3,7 @@ pub enum ErrorKind {
     PortSetFailed,
     SerialWriteFailed,
     SerialReadFailed,
-    InvalidDeviceReturn(u8),
+    //InvalidDeviceReturn(u8),
     None,
 }
 
@@ -16,13 +16,13 @@ impl Error {
         Error { error: error_kind }
     }
 
-    pub fn to_string(&self) -> String {
+    pub fn to_str(&self) -> String {
         let str = match self.error {
             ErrorKind::PortNotFound => "PortNotFound",
             ErrorKind::PortSetFailed => "PortSetFailed",
             ErrorKind::SerialWriteFailed => "SerialWriteFailed",
             ErrorKind::SerialReadFailed => "SerialReadFailed",
-            ErrorKind::InvalidDeviceReturn(_) => "InvalidDeviceReturn",
+            //ErrorKind::InvalidDeviceReturn(_) => "InvalidDeviceReturn",
             ErrorKind::None => "NotDefined",
         };
         str.to_string()
@@ -46,9 +46,9 @@ impl fmt::Display for Error {
             ErrorKind::SerialReadFailed => {
                 f.write_str("\x1b[1m\x1b[31merror\x1b[m\x1b[1m:\x1b[m SerialReadFailed. Can't read serial")
             }
-            ErrorKind::InvalidDeviceReturn(data) => {
-                f.write_str(&format!("\x1b[1m\x1b[31merror\x1b[m\x1b[1m:\x1b[m InvalidDeviceReturn. Returned {:?}", data))
-            }
+            //ErrorKind::InvalidDeviceReturn(data) => {
+            //    f.write_str(&format!("\x1b[1m\x1b[31merror\x1b[m\x1b[1m:\x1b[m InvalidDeviceReturn. Returned {:?}", data))
+            //}
             ErrorKind::None => f.write_str("\x1b[1m\x1b[31merror\x1b[m\x1b[1m:\x1b[m None. no Error"),
         }
     }

@@ -1,4 +1,3 @@
-use crate::data::SendData;
 use crate::error::{Error, ErrorKind};
 use serialport::SerialPort;
 use std::io::Write;
@@ -20,8 +19,8 @@ impl Serial {
         }
     }
 
-    /// reteurn SerialPort instance from path
-    fn create_port(&mut self, path: &str) -> Result<Box<dyn SerialPort>, Error> {
+    /// Change SerialPort connection
+    pub fn set_port(&mut self, path: &str) -> Result<Box<dyn SerialPort>, Error> {
         match serialport::new(path, BAUD_RATE)
             .stop_bits(serialport::StopBits::One)
             .data_bits(serialport::DataBits::Eight)
@@ -36,13 +35,12 @@ impl Serial {
         }
     }
 
-    /// Change SerialPort connection
-    pub fn set_port(&mut self, path: &str) -> Result<(), Error> {
+    pub fn change_port(&mut self, path: &str) -> Result<(), Error> {
         if path == &self.path[..] {
             println!("port is already {}", path);
             Ok(())
         } else {
-            let port = self.create_port(path)?;
+            let port = self.set_port(path)?;
             self.port = Some(port);
             println!("port set to {}", path);
             Ok(())
@@ -50,7 +48,7 @@ impl Serial {
     }
 
     /// Write serial and return result
-    fn serial_write(&mut self, data: Vec<u8>) -> Result<(), Error> {
+    fn write(&mut self, data: Vec<u8>) -> Result<(), Error> {
         let port: &mut Box<dyn SerialPort> = match self.port.as_mut() {
             Some(a) => a,
             None => {
@@ -69,7 +67,7 @@ impl Serial {
     }
 
     /// Read serial and return result
-    fn serial_read<'a>(&mut self, buf: &'a mut Vec<u8>) -> Result<&'a [u8], Error> {
+    fn read<'a>(&mut self, buf: &'a mut Vec<u8>) -> Result<&'a [u8], Error> {
         let port: &mut Box<dyn SerialPort> = match self.port.as_mut() {
             Some(a) => a,
             None => {
@@ -89,7 +87,7 @@ impl Serial {
         let mut errbuf: Error = Error::new(ErrorKind::None);
         for _i in 0..=2 {
             // 送信する
-            match self.serial_write(data) {
+            match self.write(data.clone()) {
                 Ok(_) => (),
                 Err(e) => {
                     errbuf = e;
@@ -98,7 +96,7 @@ impl Serial {
             };
             //受信する
             let mut buf: Vec<u8> = vec![0];
-            match self.serial_read(&mut buf) {
+            match self.read(&mut buf) {
                 Ok(data) => {
                     if send_num == data[1] {
                         return Ok(());
